@@ -3,6 +3,7 @@ from rest_framework.exceptions import AuthenticationFalied, APIException
 from django.contrib.auth.hashers import check_password, make_password
 
 from accounts.models import User
+from companies.models import Employee, Enterprise
 
 
 class Authentication:
@@ -31,10 +32,32 @@ class Authentication:
         if not password or password == '':
             raise APIException('O password não deve ser null')
         
+        if type_account == 'employee' and not company_id:
+            raise APIException('o id da empresa nao deve ser null')
+
         user = User
         if user.objects.filter(email=email).exists():
             raise APIException('Este email já existe na plataforma')
         
         password_hashed = make_password(password)
 
+        created_use = user.objects.create(
+            name=name,
+            email=email,
+            password=password_hashed,
+            is_owner = 0 if type_account == 'employee' else 1
+        )
+
+        if type_account == 'owner':
+            create_enterprise = Enterprise.objects.create(
+                name = 'Nome da empresa',
+                user_id=created_use.id
+            )
         
+        if type_account == 'employee':
+            Employee.objects.create(
+                enterprise_id=company_id or create_enterprise.id,
+                user_id=created_use.id
+            )
+
+        return created_use
