@@ -1,14 +1,14 @@
-from rest_framework.exceptions import AuthenticationFalied, APIException
+from rest_framework.exceptions import AuthenticationFailed, APIException
 
 from django.contrib.auth.hashers import check_password, make_password
 
 from accounts.models import User
-from companies.models import Employee, Enterprise
 
+from companies.models import Enterprise, Employee
 
 class Authentication:
-    def signin(self, email=None, password=None) -> None | None:
-        exception_auth = AuthenticationFalied('Email e/ou senha incorreto(s)')
+    def signin(self, email=None, password=None) -> User:
+        exception_auth = AuthenticationFailed('Email e/ou senha incorreto(s)')
 
         user_exists = User.objects.filter(email=email).exists()
 
@@ -33,7 +33,7 @@ class Authentication:
             raise APIException('O password não deve ser null')
         
         if type_account == 'employee' and not company_id:
-            raise APIException('o id da empresa nao deve ser null')
+            raise APIException('O id da empresa não deve ser null')
 
         user = User
         if user.objects.filter(email=email).exists():
@@ -41,23 +41,23 @@ class Authentication:
         
         password_hashed = make_password(password)
 
-        created_use = user.objects.create(
+        created_user = user.objects.create(
             name=name,
             email=email,
             password=password_hashed,
-            is_owner = 0 if type_account == 'employee' else 1
+            is_owner=0 if type_account == 'employee' else 1
         )
 
         if type_account == 'owner':
-            create_enterprise = Enterprise.objects.create(
-                name = 'Nome da empresa',
-                user_id=created_use.id
-            )
-        
-        if type_account == 'employee':
-            Employee.objects.create(
-                enterprise_id=company_id or create_enterprise.id,
-                user_id=created_use.id
+            created_enterprise = Enterprise.objects.create(
+                name='Nome da empresa',
+                user_id=created_user.id
             )
 
-        return created_use
+        if type_account == 'employee':
+            Employee.objects.create(
+                enterprise_id=company_id or created_enterprise.id,
+                user_id=created_user.id
+            )
+
+        return created_user

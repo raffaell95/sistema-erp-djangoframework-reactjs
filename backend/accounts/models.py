@@ -12,14 +12,14 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
-
+    
 class Group(models.Model):
     name = models.CharField(max_length=85)
     enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
 
-class GroupPermission(models.Model):
+class Group_Permissions(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    permission  = models.ForeignKey(Permission, on_delete=models.CASCADE)
 
 class User_Groups(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
